@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button, Form } from "react-bootstrap"
+import * as signalR from '@microsoft/signalr';
 
 export const Lobby = ({joinRoom}) => {
 
@@ -9,7 +10,7 @@ export const Lobby = ({joinRoom}) => {
     return <Form className="lobby"
         onSubmit = {_ => {
             _.preventDefault();
-            _.joinRoom(user,room);
+            joinRoom(user,room);
             }
         }>
 
