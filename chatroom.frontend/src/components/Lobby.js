@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { Button, Form } from "react-bootstrap"
-import * as signalR from '@microsoft/signalr';
 
 export const Lobby = ({joinRoom}) => {
 

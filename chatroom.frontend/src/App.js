@@ -2,10 +2,13 @@ import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import "./App.css";
 import { Lobby } from "./components/Lobby";
 import { useState } from "react";
-import * as signalR from '@microsoft/signalr';
+import Chat from "./components/Chat";
 
 const App = () => {
   const [connection, setConnection] = useState();
+  const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState([]);
+
   const joinRoom = async (user, room) => {
     try {
       const connection = new HubConnectionBuilder()
@@ -13,22 +16,39 @@ const App = () => {
         .configureLogging(LogLevel.Information)
         .build();
 
-      const start = async () => {
-        try {
-          await connection.start();
-          console.log("Connected to signal r hub");
-        } catch (error) {
-          console.log(error);
-        }
-      };
+      connection.on("UserInRoom", (users) => {
+        setUsers(users);
+      });
 
       connection.on("ReceiveMessage", (user, message) => {
-        console.log("message received: ", message);
+        setMessages((messages) => [...messages, { user, message }]);
+      });
+
+      connection.onclose((e) => {
+        setConnection();
+        setMessages([]);
+        setUsers([])
       });
 
       await connection.start();
-      await connection.invoke("JoinRoom", {user, room});
+      await connection.invoke("JoinRoom", { user, room });
       setConnection(connection);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const closeConnection = async () => {
+    try {
+      await connection.stop();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const sendMessage = async (message) => {
+    try {
+      await connection.invoke("SendMessage", message);
     } catch (error) {
       console.log(error);
     }
@@ -38,7 +58,16 @@ const App = () => {
     <div className="app">
       <h2>RoomChat</h2>
       <hr className="line" />
-      <Lobby joinRoom={joinRoom} />
+      {!connection ? (
+        <Lobby joinRoom={joinRoom} />
+      ) : (
+        <Chat
+          sendMessage={sendMessage}
+          messages={messages}
+          closeConnection={closeConnection}
+          users = {users}
+        />
+      )}
     </div>
   );
 };
